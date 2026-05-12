@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { PaperPlaneRight, WhatsappLogo } from "@phosphor-icons/react";
 
-const WHATSAPP_NUMBER = "5511965125056";
+const WHATSAPP_NUMBER = "5511982656845";
 
 type Sender = "bot" | "user";
 

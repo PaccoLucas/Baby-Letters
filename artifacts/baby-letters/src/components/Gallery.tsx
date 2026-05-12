@@ -2,7 +2,7 @@ import { useState } from "react";
 
 const galleryImages = [
   {
-    src: "https://images.unsplash.com/photo-1562962230-16e4623d36e6?q=80&w=500&auto=format&fit=crop",
+    src: "https://images.unsplash.com/photo-1542727313-4f3e99aa2568?q=80&w=500&auto=format&fit=crop",
     alt: "Tattoo lettering work 1",
   },
   {
@@ -14,7 +14,7 @@ const galleryImages = [
     alt: "Tattoo lettering work 3",
   },
   {
-    src: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=500&auto=format&fit=crop",
+    src: "https://images.unsplash.com/photo-1604881988758-f76ad2f7aac1?q=80&w=500&auto=format&fit=crop",
     alt: "Tattoo lettering work 4",
   },
 ];
