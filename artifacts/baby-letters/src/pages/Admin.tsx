@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import {
   Star, Plus, Pencil, Trash, Eye, EyeSlash, X, Check,
-  Images, ChatText, ArrowUp, ArrowDown,
+  Images, ChatText, ArrowUp, ArrowDown, ThumbsUp, Clock,
 } from "@phosphor-icons/react";
 
 const API = "/api";
@@ -13,14 +13,14 @@ function headers() {
 
 interface Testimonial {
   id: number; name: string; avatar: string; text: string;
-  stars: number; visible: boolean; createdAt: string;
+  stars: number; visible: boolean; pending: boolean; createdAt: string;
 }
 interface PortfolioItem {
-  id: number; url: string; alt: string;
-  orderIndex: number; visible: boolean;
+  id: number; url: string; alt: string; orderIndex: number; visible: boolean;
 }
 
 type Tab = "testimonials" | "portfolio";
+type TestimonialsView = "approved" | "pending";
 
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 function Login({ onLogin }: { onLogin: () => void }) {
@@ -38,7 +38,7 @@ function Login({ onLogin }: { onLogin: () => void }) {
         <input
           type="password" placeholder="Digite a senha..." value={pw}
           onChange={(e) => setPw(e.target.value)} onKeyDown={(e) => e.key === "Enter" && attempt()}
-          style={{ width: "100%", padding: "12px 16px", background: "#262626", border: `1px solid ${err ? "#ef4444" : "#444"}`, borderRadius: "10px", color: "#fff", fontSize: "1rem", outline: "none", marginBottom: err ? "8px" : "16px" }}
+          style={{ width: "100%", padding: "12px 16px", background: "#262626", border: `1px solid ${err ? "#ef4444" : "#444"}`, borderRadius: "10px", color: "#fff", fontSize: "1rem", outline: "none", marginBottom: err ? "8px" : "16px", boxSizing: "border-box" }}
         />
         {err && <p style={{ color: "#ef4444", fontSize: "0.85rem", marginBottom: "16px" }}>Senha incorreta</p>}
         <button onClick={attempt} style={{ width: "100%", padding: "12px", background: "#d4af37", color: "#000", border: "none", borderRadius: "10px", fontWeight: 700, fontSize: "1rem", cursor: "pointer" }}>
@@ -60,26 +60,28 @@ function Toast({ msg }: { msg: string }) {
 }
 
 // ─── ICON BTN ─────────────────────────────────────────────────────────────────
-function IconBtn({ onClick, title, danger, children }: { onClick: () => void; title: string; danger?: boolean; children: React.ReactNode }) {
+function IconBtn({ onClick, title, danger, success, children }: { onClick: () => void; title: string; danger?: boolean; success?: boolean; children: React.ReactNode }) {
   const [h, setH] = useState(false);
+  const color = danger ? "#ef4444" : success ? "#4ade80" : "#d4af37";
   return (
     <button onClick={onClick} title={title} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
-      style={{ background: h ? (danger ? "#ef444422" : "#d4af3722") : "transparent", border: `1px solid ${h ? (danger ? "#ef4444" : "#d4af37") : "#333"}`, color: h ? (danger ? "#ef4444" : "#d4af37") : "#a3a3a3", width: "34px", height: "34px", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+      style={{ background: h ? `${color}22` : "transparent", border: `1px solid ${h ? color : "#333"}`, color: h ? color : "#a3a3a3", width: "34px", height: "34px", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
       {children}
     </button>
   );
 }
 
-const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "#262626", border: "1px solid #444", borderRadius: "8px", color: "#fff", fontSize: "0.9rem", outline: "none" };
+const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "#262626", border: "1px solid #444", borderRadius: "8px", color: "#fff", fontSize: "0.9rem", outline: "none", boxSizing: "border-box" };
 
 // ─── TESTIMONIALS TAB ─────────────────────────────────────────────────────────
 function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
   const [items, setItems] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<TestimonialsView>("approved");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
-  const emptyForm = { name: "", avatar: "", text: "", stars: 5, visible: true };
+  const emptyForm = { name: "", avatar: "", text: "", stars: 5, visible: true, pending: false };
   const [form, setForm] = useState(emptyForm);
 
   async function load() {
@@ -90,6 +92,10 @@ function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
     } finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);
+
+  const approved = items.filter((t) => !t.pending);
+  const pending = items.filter((t) => t.pending);
+  const displayed = view === "approved" ? approved : pending;
 
   async function save() {
     setSaving(true);
@@ -108,6 +114,11 @@ function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
     load();
   }
 
+  async function approve(t: Testimonial) {
+    await fetch(`${API}/admin/testimonials/${t.id}/approve`, { method: "POST", headers: headers() });
+    toast("Depoimento aprovado!"); load();
+  }
+
   async function remove(id: number) {
     if (!confirm("Excluir?")) return;
     await fetch(`${API}/admin/testimonials/${id}`, { method: "DELETE", headers: headers() });
@@ -115,17 +126,30 @@ function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
   }
 
   function startEdit(t: Testimonial) {
-    setForm({ name: t.name, avatar: t.avatar, text: t.text, stars: t.stars, visible: t.visible });
-    setEditingId(t.id); setShowForm(true);
+    setForm({ name: t.name, avatar: t.avatar, text: t.text, stars: t.stars, visible: t.visible, pending: t.pending });
+    setEditingId(t.id); setShowForm(true); setView("approved");
   }
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-        <h2 style={{ fontSize: "1.1rem", color: "#f5f5f5" }}>Depoimentos <span style={{ color: "#a3a3a3", fontSize: "0.85rem" }}>({items.length})</span></h2>
-        <button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(true); }}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "1.1rem", color: "#f5f5f5" }}>Depoimentos</h2>
+        <button onClick={() => { setForm(emptyForm); setEditingId(null); setShowForm(true); setView("approved"); }}
           style={{ display: "flex", alignItems: "center", gap: "6px", background: "#d4af37", color: "#000", border: "none", padding: "8px 16px", borderRadius: "8px", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem" }}>
           <Plus size={16} weight="bold" /> Novo
+        </button>
+      </div>
+
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", gap: "6px", marginBottom: "20px" }}>
+        <button onClick={() => setView("approved")}
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 16px", borderRadius: "8px", border: `1px solid ${view === "approved" ? "#d4af37" : "#333"}`, background: view === "approved" ? "#d4af3715" : "transparent", color: view === "approved" ? "#d4af37" : "#a3a3a3", cursor: "pointer", fontSize: "0.82rem", fontWeight: view === "approved" ? 700 : 400 }}>
+          <Check size={14} weight="bold" /> Publicados ({approved.length})
+        </button>
+        <button onClick={() => setView("pending")}
+          style={{ display: "flex", alignItems: "center", gap: "6px", padding: "7px 16px", borderRadius: "8px", border: `1px solid ${view === "pending" ? "#f59e0b" : "#333"}`, background: view === "pending" ? "#f59e0b15" : "transparent", color: view === "pending" ? "#f59e0b" : "#a3a3a3", cursor: "pointer", fontSize: "0.82rem", fontWeight: view === "pending" ? 700 : 400, position: "relative" }}>
+          <Clock size={14} /> Aguardando ({pending.length})
+          {pending.length > 0 && <span style={{ position: "absolute", top: "-6px", right: "-6px", background: "#ef4444", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{pending.length}</span>}
         </button>
       </div>
 
@@ -179,14 +203,14 @@ function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
       )}
 
       {loading ? <p style={{ color: "#a3a3a3", textAlign: "center", padding: "40px" }}>Carregando...</p>
-        : items.length === 0 ? (
+        : displayed.length === 0 ? (
           <div style={{ background: "#171717", border: "1px dashed #333", borderRadius: "14px", padding: "50px 20px", textAlign: "center", color: "#a3a3a3" }}>
-            <p style={{ marginBottom: "12px" }}>Nenhum depoimento ainda.</p>
+            {view === "pending" ? <p>Nenhum depoimento aguardando aprovação.</p> : <p>Nenhum depoimento publicado ainda.</p>}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {items.map((t) => (
-              <div key={t.id} style={{ background: "#171717", border: `1px solid ${t.visible ? "#2a2a2a" : "#333"}`, borderRadius: "12px", padding: "16px 18px", opacity: t.visible ? 1 : 0.6 }}>
+            {displayed.map((t) => (
+              <div key={t.id} style={{ background: "#171717", border: `1px solid ${t.pending ? "#f59e0b33" : t.visible ? "#2a2a2a" : "#333"}`, borderRadius: "12px", padding: "16px 18px", opacity: !t.pending && !t.visible ? 0.6 : 1 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
@@ -197,13 +221,15 @@ function TestimonialsTab({ toast }: { toast: (m: string) => void }) {
                           {Array.from({ length: t.stars }).map((_, i) => <Star key={i} size={11} weight="fill" color="#d4af37" />)}
                         </div>
                       </div>
-                      {!t.visible && <span style={{ fontSize: "0.65rem", background: "#333", color: "#a3a3a3", padding: "2px 7px", borderRadius: "5px" }}>oculto</span>}
+                      {t.pending && <span style={{ fontSize: "0.65rem", background: "#f59e0b22", color: "#f59e0b", border: "1px solid #f59e0b44", padding: "2px 8px", borderRadius: "5px" }}>aguardando</span>}
+                      {!t.pending && !t.visible && <span style={{ fontSize: "0.65rem", background: "#333", color: "#a3a3a3", padding: "2px 7px", borderRadius: "5px" }}>oculto</span>}
                     </div>
                     <p style={{ color: "#d4d4d4", fontSize: "0.85rem", lineHeight: 1.5 }}>"{t.text}"</p>
                   </div>
                   <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
-                    <IconBtn onClick={() => toggle(t)} title={t.visible ? "Ocultar" : "Mostrar"}>{t.visible ? <Eye size={15} /> : <EyeSlash size={15} />}</IconBtn>
-                    <IconBtn onClick={() => startEdit(t)} title="Editar"><Pencil size={15} /></IconBtn>
+                    {t.pending && <IconBtn onClick={() => approve(t)} title="Aprovar e publicar" success><ThumbsUp size={15} /></IconBtn>}
+                    {!t.pending && <IconBtn onClick={() => toggle(t)} title={t.visible ? "Ocultar" : "Mostrar"}>{t.visible ? <Eye size={15} /> : <EyeSlash size={15} />}</IconBtn>}
+                    {!t.pending && <IconBtn onClick={() => startEdit(t)} title="Editar"><Pencil size={15} /></IconBtn>}
                     <IconBtn onClick={() => remove(t.id)} title="Excluir" danger><Trash size={15} /></IconBtn>
                   </div>
                 </div>
@@ -301,7 +327,7 @@ function PortfolioTab({ toast }: { toast: (m: string) => void }) {
             <div>
               <label style={{ fontSize: "0.75rem", color: "#a3a3a3", display: "block", marginBottom: "4px" }}>URL da Imagem</label>
               <input value={form.url} onChange={(e) => handleUrlChange(e.target.value)} placeholder="https://..." style={{ ...inputStyle, marginBottom: "10px" }} />
-              <label style={{ fontSize: "0.75rem", color: "#a3a3a3", display: "block", marginBottom: "4px" }}>Descrição (alt)</label>
+              <label style={{ fontSize: "0.75rem", color: "#a3a3a3", display: "block", marginBottom: "4px" }}>Descrição</label>
               <input value={form.alt} onChange={(e) => setForm({ ...form, alt: e.target.value })} placeholder="Ex: Lettering no braço" style={{ ...inputStyle, marginBottom: "10px" }} />
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <label style={{ fontSize: "0.75rem", color: "#a3a3a3" }}>Visível:</label>
@@ -340,7 +366,7 @@ function PortfolioTab({ toast }: { toast: (m: string) => void }) {
             {[...items].sort((a, b) => a.orderIndex - b.orderIndex).map((item) => (
               <div key={item.id} style={{ background: "#171717", border: "1px solid #2a2a2a", borderRadius: "12px", overflow: "hidden", opacity: item.visible ? 1 : 0.55 }}>
                 <div style={{ aspectRatio: "1/1", position: "relative", overflow: "hidden" }}>
-                  <img src={item.url} alt={item.alt} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => { (e.currentTarget as HTMLImageElement).src = "https://via.placeholder.com/200x200/171717/555?text=Erro"; }} />
+                  <img src={item.url} alt={item.alt} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} onError={(e) => { (e.currentTarget as HTMLImageElement).style.opacity = "0.3"; }} />
                   {!item.visible && (
                     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <span style={{ background: "#333", color: "#a3a3a3", fontSize: "0.7rem", padding: "3px 8px", borderRadius: "5px" }}>oculta</span>
@@ -382,8 +408,6 @@ export default function Admin() {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f5f5f5", padding: "24px" }}>
       <Toast msg={toastMsg} />
       <div style={{ maxWidth: "860px", margin: "0 auto" }}>
-
-        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
           <div>
             <h1 className="gothic-font" style={{ color: "#d4af37", fontSize: "1.8rem" }}>Baby Letters</h1>
@@ -392,7 +416,6 @@ export default function Admin() {
           <a href="/" style={{ color: "#a3a3a3", fontSize: "0.8rem", textDecoration: "none" }}>← Ver site</a>
         </div>
 
-        {/* Tabs */}
         <div style={{ display: "flex", gap: "4px", marginBottom: "24px", background: "#111", padding: "4px", borderRadius: "10px", width: "fit-content" }}>
           {([
             ["testimonials", <ChatText size={16} />, "Depoimentos"],

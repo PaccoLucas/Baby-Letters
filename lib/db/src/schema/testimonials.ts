@@ -9,6 +9,7 @@ export const testimonialsTable = pgTable("testimonials", {
   text: text("text").notNull(),
   stars: integer("stars").notNull().default(5),
   visible: boolean("visible").notNull().default(true),
+  pending: boolean("pending").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
