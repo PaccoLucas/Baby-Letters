@@ -10,7 +10,7 @@ const galleryImages = [
     alt: "Tattoo lettering work 2",
   },
   {
-    src: "https://images.unsplash.com/photo-1598371839696-5e5bb00b059b?q=80&w=500&auto=format&fit=crop",
+    src: "https://images.unsplash.com/photo-1568515387631-8b650bbcdb90?q=80&w=500&auto=format&fit=crop",
     alt: "Tattoo lettering work 3",
   },
   {
