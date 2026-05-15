@@ -8,3 +8,33 @@
 export interface HealthStatus {
   status: string;
 }
+
+export interface Testimonial {
+  id: number;
+  name: string;
+  avatar: string;
+  text: string;
+  stars: number;
+  visible: boolean;
+  createdAt: string;
+}
+
+export interface TestimonialInput {
+  name: string;
+  avatar: string;
+  text: string;
+  /**
+   * @minimum 1
+   * @maximum 5
+   */
+  stars: number;
+  visible: boolean;
+}
+
+export interface ErrorResponse {
+  error: string;
+}
+
+export interface SuccessResponse {
+  success: boolean;
+}

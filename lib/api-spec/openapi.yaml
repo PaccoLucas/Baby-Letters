@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: testimonials
+    description: Testimonials operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,148 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /testimonials:
+    get:
+      operationId: listTestimonials
+      tags: [testimonials]
+      summary: List visible testimonials
+      responses:
+        "200":
+          description: List of testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Testimonial"
+
+  /admin/testimonials:
+    get:
+      operationId: adminListTestimonials
+      tags: [testimonials]
+      summary: List all testimonials (admin)
+      parameters:
+        - in: header
+          name: x-admin-password
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of all testimonials
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Testimonial"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: createTestimonial
+      tags: [testimonials]
+      summary: Create a testimonial (admin)
+      parameters:
+        - in: header
+          name: x-admin-password
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestimonialInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Testimonial"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/testimonials/{id}:
+    put:
+      operationId: updateTestimonial
+      tags: [testimonials]
+      summary: Update a testimonial (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: header
+          name: x-admin-password
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TestimonialInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Testimonial"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteTestimonial
+      tags: [testimonials]
+      summary: Delete a testimonial (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - in: header
+          name: x-admin-password
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +178,67 @@ components:
       required:
         - status
 
+    Testimonial:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        avatar:
+          type: string
+        text:
+          type: string
+        stars:
+          type: integer
+        visible:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - avatar
+        - text
+        - stars
+        - visible
+        - createdAt
+
+    TestimonialInput:
+      type: object
+      properties:
+        name:
+          type: string
+        avatar:
+          type: string
+        text:
+          type: string
+        stars:
+          type: integer
+          minimum: 1
+          maximum: 5
+        visible:
+          type: boolean
+      required:
+        - name
+        - avatar
+        - text
+        - stars
+        - visible
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success

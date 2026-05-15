@@ -14,3 +14,100 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * @summary List visible testimonials
+ */
+export const ListTestimonialsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  avatar: zod.string(),
+  text: zod.string(),
+  stars: zod.number(),
+  visible: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const ListTestimonialsResponse = zod.array(ListTestimonialsResponseItem);
+
+/**
+ * @summary List all testimonials (admin)
+ */
+export const AdminListTestimonialsHeader = zod.object({
+  "x-admin-password": zod.string(),
+});
+
+export const AdminListTestimonialsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  avatar: zod.string(),
+  text: zod.string(),
+  stars: zod.number(),
+  visible: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+export const AdminListTestimonialsResponse = zod.array(
+  AdminListTestimonialsResponseItem,
+);
+
+/**
+ * @summary Create a testimonial (admin)
+ */
+export const CreateTestimonialHeader = zod.object({
+  "x-admin-password": zod.string(),
+});
+
+export const createTestimonialBodyStarsMax = 5;
+
+export const CreateTestimonialBody = zod.object({
+  name: zod.string(),
+  avatar: zod.string(),
+  text: zod.string(),
+  stars: zod.number().min(1).max(createTestimonialBodyStarsMax),
+  visible: zod.boolean(),
+});
+
+/**
+ * @summary Update a testimonial (admin)
+ */
+export const UpdateTestimonialParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateTestimonialHeader = zod.object({
+  "x-admin-password": zod.string(),
+});
+
+export const updateTestimonialBodyStarsMax = 5;
+
+export const UpdateTestimonialBody = zod.object({
+  name: zod.string(),
+  avatar: zod.string(),
+  text: zod.string(),
+  stars: zod.number().min(1).max(updateTestimonialBodyStarsMax),
+  visible: zod.boolean(),
+});
+
+export const UpdateTestimonialResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  avatar: zod.string(),
+  text: zod.string(),
+  stars: zod.number(),
+  visible: zod.boolean(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Delete a testimonial (admin)
+ */
+export const DeleteTestimonialParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteTestimonialHeader = zod.object({
+  "x-admin-password": zod.string(),
+});
+
+export const DeleteTestimonialResponse = zod.object({
+  success: zod.boolean(),
+});
