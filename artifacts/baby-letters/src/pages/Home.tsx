@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Chatbot from "@/components/Chatbot";
 import Gallery from "@/components/Gallery";
 import Footer from "@/components/Footer";
+import WhatsAppFloat from "@/components/WhatsAppFloat";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
         <Gallery />
       </main>
       <Footer />
+      <WhatsAppFloat />
     </div>
   );
 }
