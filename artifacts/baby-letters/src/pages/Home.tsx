@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Chatbot from "@/components/Chatbot";
 import Gallery from "@/components/Gallery";
+import Testimonials from "@/components/Testimonials";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 
@@ -13,6 +14,7 @@ export default function Home() {
         <Hero />
         <Chatbot />
         <Gallery />
+        <Testimonials />
       </main>
       <Footer />
       <WhatsAppFloat />
