@@ -1,10 +1,11 @@
-# [Project name]
+# Baby Letters — Site da Tatuadora
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Site de portfólio e captação de clientes para Brhenda Rodrigues (@baby.letters), tatuadora especializada em lettering, Jundiaí SP.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/baby-letters run dev` — run the front-end site
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,6 +15,7 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Wouter (routing) + TanStack Query
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -22,23 +24,42 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/baby-letters/src/` — Frontend React app
+  - `pages/Admin.tsx` — Admin panel (password: 1234)
+  - `components/Gallery.tsx` — Fetches portfolio from /api/portfolio
+  - `components/Testimonials.tsx` — Fetches from /api/testimonials
+- `artifacts/api-server/src/routes/` — API routes
+  - `testimonials.ts` — CRUD for testimonials
+  - `portfolio.ts` — CRUD for portfolio items
+- `lib/db/src/schema/` — DB schemas (testimonials.ts, portfolio.ts)
+- `lib/api-spec/openapi.yaml` — OpenAPI spec (source of truth for codegen)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Admin auth uses a simple `x-admin-password` HTTP header checked against `ADMIN_PASSWORD` env var (default: "1234")
+- Portfolio photos are URL-based (admin pastes image URLs) — no file upload needed
+- Testimonials and Gallery components have hardcoded fallback data if DB is empty
+- `lang="pt-BR" translate="no"` on index.html prevents Chrome auto-translation
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Hero section with Brhenda's profile photo and Instagram link
+- Interactive WhatsApp chatbot (3-step quote flow)
+- Portfolio gallery (fetches from DB, fallback to stock images)
+- Testimonials section (fetches from DB, fallback to defaults)
+- Admin panel at /admin with tabs: Depoimentos + Portfólio
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- WhatsApp: 5511982656845
+- Instagram: @baby.letters
+- Admin password: 1234
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Profile photo: artifacts/baby-letters/public/brhenda-profile.jpg
+- Workflows may show EADDRINUSE if restarted too quickly — kill with `fuser -k 8080/tcp 25467/tcp` first
+- Always run `pnpm --filter @workspace/db run push` after adding new DB schema tables
 
 ## Pointers
 
