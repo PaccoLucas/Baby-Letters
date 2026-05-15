@@ -1,4 +1,5 @@
-import { Needle, PaintBrushBroad, MapPin } from "@phosphor-icons/react";
+import { useState } from "react";
+import { Needle, PaintBrushBroad, MapPin, InstagramLogo } from "@phosphor-icons/react";
 
 export default function Hero() {
   return (
@@ -53,11 +54,13 @@ export default function Hero() {
           color: "#a3a3a3",
           fontSize: "1.1rem",
           maxWidth: "500px",
-          marginBottom: "30px",
+          marginBottom: "20px",
         }}
       >
         Especialista em caligrafia personalizada e tattoos exclusivas em Jundiaí - SP.
       </p>
+
+      <InstagramButton />
 
       <div
         style={{
@@ -66,6 +69,7 @@ export default function Hero() {
           justifyContent: "center",
           flexWrap: "wrap",
           marginBottom: "30px",
+          marginTop: "20px",
         }}
       >
         <Tag icon={<Needle size={14} weight="fill" />} label="Lettering Pro" />
@@ -73,6 +77,42 @@ export default function Hero() {
         <Tag icon={<MapPin size={14} weight="fill" />} label="Cartel Tattoos" />
       </div>
     </section>
+  );
+}
+
+function InstagramButton() {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <a
+      href="https://www.instagram.com/baby.letters"
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "10px 22px",
+        borderRadius: "24px",
+        background: hovered
+          ? "linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)"
+          : "transparent",
+        border: "1.5px solid",
+        borderColor: hovered ? "transparent" : "#555",
+        color: hovered ? "#fff" : "#a3a3a3",
+        textDecoration: "none",
+        fontSize: "0.9rem",
+        fontWeight: 600,
+        transition: "all 0.3s ease",
+        marginBottom: "4px",
+        letterSpacing: "0.3px",
+      }}
+    >
+      <InstagramLogo size={18} weight="fill" />
+      @baby.letters
+    </a>
   );
 }
 
