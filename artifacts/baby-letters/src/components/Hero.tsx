@@ -34,10 +34,9 @@ export default function Hero() {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            objectPosition: "center 38%",
-            filter: "contrast(1.08) brightness(1.05) saturate(1.1)",
-            transform: "scale(1.4)",
-            transformOrigin: "center 38%",
+            objectPosition: "center 45%",
+            filter: "contrast(1.1) brightness(1.05) saturate(1.1)",
+            transform: "scale(1.0)",
           }}
         />
       </div>
