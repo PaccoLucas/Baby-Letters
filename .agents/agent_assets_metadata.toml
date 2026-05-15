@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "tUg6G6k4DSxoHBM7uRT9C"
+uri = "file://baby-letters.tar.gz"
+type = "unspecified"
+title = "Baby Letters — Código Fonte"
