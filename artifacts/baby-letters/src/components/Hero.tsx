@@ -14,19 +14,32 @@ export default function Hero() {
         marginTop: "50px",
       }}
     >
-      <img
-        src="https://ui-avatars.com/api/?name=Baby+Letters&background=171717&color=d4af37&size=300"
-        alt="Brhenda Rodrigues"
+      <div
         style={{
-          width: "150px",
-          height: "150px",
+          width: "160px",
+          height: "160px",
           borderRadius: "50%",
           border: "3px solid #d4af37",
-          objectFit: "cover",
           marginBottom: "20px",
-          boxShadow: "0 0 25px rgba(212, 175, 55, 0.2)",
+          boxShadow: "0 0 30px rgba(212, 175, 55, 0.35)",
+          overflow: "hidden",
+          flexShrink: 0,
         }}
-      />
+      >
+        <img
+          src="/brhenda-profile.jpg"
+          alt="Brhenda Rodrigues"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "center 38%",
+            filter: "contrast(1.08) brightness(1.05) saturate(1.1)",
+            transform: "scale(1.4)",
+            transformOrigin: "center 38%",
+          }}
+        />
+      </div>
 
       <h2
         className="gothic-font"
