@@ -19,3 +19,4 @@
 
 export * from "./testimonials";
 export * from "./portfolio";
+export * from "./settings";

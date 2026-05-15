@@ -6,8 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./errorEnvelope";
 export * from "./errorResponse";
 export * from "./healthStatus";
 export * from "./successResponse";
 export * from "./testimonial";
 export * from "./testimonialInput";
+export * from "./uploadUrlRequest";
+export * from "./uploadUrlResponse";

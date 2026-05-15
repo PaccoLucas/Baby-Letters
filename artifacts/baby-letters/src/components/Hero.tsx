@@ -1,7 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Needle, PaintBrushBroad, MapPin, InstagramLogo } from "@phosphor-icons/react";
 
 export default function Hero() {
+  const [profilePhoto, setProfilePhoto] = useState("/brhenda-profile.jpg");
+
+  useEffect(() => {
+    fetch("/api/settings/profile_photo")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.value) setProfilePhoto(d.value); })
+      .catch(() => {});
+  }, []);
+
   return (
     <section
       style={{
@@ -28,15 +37,15 @@ export default function Hero() {
         }}
       >
         <img
-          src="/brhenda-profile.jpg"
+          src={profilePhoto}
           alt="Brhenda Rodrigues"
+          onError={() => setProfilePhoto("/brhenda-profile.jpg")}
           style={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
             objectPosition: "center 45%",
             filter: "contrast(1.1) brightness(1.05) saturate(1.1)",
-            transform: "scale(1.0)",
           }}
         />
       </div>
