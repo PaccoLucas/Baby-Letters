@@ -1,81 +1,85 @@
-import { Router, type IRouter, type Request, type Response } from "express";
-import { Readable } from "stream";
-import {
-  RequestUploadUrlBody,
-  RequestUploadUrlResponse,
-} from "@workspace/api-zod";
-import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
+import { Router, type Request, type Response } from "express";
+import fs from "fs";
+import path from "path";
+import { RequestUploadUrlBody } from "@workspace/api-zod";
 
-const router: IRouter = Router();
-const objectStorageService = new ObjectStorageService();
+const router = Router();
 
-// POST /api/storage/uploads/request-url
+// Define a pasta física onde o seu servidor vai guardar as fotos
+const UPLOADS_DIR = path.join(process.cwd(), "uploads");
+
+// Se a pasta ainda não existir, o servidor cria automaticamente ao ligar
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// 1. O site pede um "bilhete" para subir a foto
 router.post("/uploads/request-url", async (req: Request, res: Response) => {
-  const parsed = RequestUploadUrlBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "Missing or invalid required fields" });
-    return;
-  }
-
   try {
-    const { name, size, contentType } = parsed.data;
-    const uploadURL = await objectStorageService.getObjectEntityUploadURL();
-    const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+    const parsed = RequestUploadUrlBody.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: "Missing or invalid required fields" });
+    }
 
-    res.json(
-      RequestUploadUrlResponse.parse({
-        uploadURL,
-        objectPath,
-        metadata: { name, size, contentType },
-      }),
-    );
+    const { name, size, contentType } = parsed.data;
+
+    // Criamos um nome único com a data atual para não haver ficheiros repetidos
+    const uniqueName = `${Date.now()}-${name.replace(/[^a-zA-Z0-9.]/g, "")}`;
+
+    // Em vez de apontar para o Replit, apontamos para a nossa própria rota (criada abaixo)
+    const uploadURL = `/api/storage/direct-upload/${uniqueName}`;
+
+    res.json({
+      uploadURL,
+      objectPath: `/objects/${uniqueName}`, // O endereço que será guardado na base de dados
+      metadata: { name, size, contentType },
+    });
   } catch (error) {
-    req.log.error({ err: error }, "Error generating upload URL");
     res.status(500).json({ error: "Failed to generate upload URL" });
   }
 });
 
-// GET /api/storage/public-objects/*
-router.get("/public-objects/*filePath", async (req: Request, res: Response) => {
-  try {
-    const raw = req.params.filePath;
-    const filePath = Array.isArray(raw) ? raw.join("/") : raw;
-    const file = await objectStorageService.searchPublicObject(filePath);
-    if (!file) { res.status(404).json({ error: "File not found" }); return; }
+// 2. ROTA NOVA: Onde o site efetivamente entrega a foto
+router.put("/direct-upload/:filename", (req: Request, res: Response) => {
+  const fileName = req.params.filename;
+  const filePath = path.join(UPLOADS_DIR, fileName);
 
-    const response = await objectStorageService.downloadObject(file);
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    if (response.body) {
-      Readable.fromWeb(response.body as ReadableStream<Uint8Array>).pipe(res);
-    } else { res.end(); }
-  } catch (error) {
-    req.log.error({ err: error }, "Error serving public object");
-    res.status(500).json({ error: "Failed to serve public object" });
+  // Captura a foto que veio do navegador e grava diretamente no disco rígido
+  const writeStream = fs.createWriteStream(filePath);
+  req.pipe(writeStream);
+
+  req.on("end", () => {
+    res.status(200).json({ success: true });
+  });
+
+  req.on("error", () => {
+    res.status(500).json({ error: "Failed to save file" });
+  });
+});
+
+// 3. O site pede para ver a foto (quando carrega o portfólio para os clientes)
+router.get("/objects/*path", (req: Request, res: Response) => {
+  const raw = req.params.path;
+  const fileName = Array.isArray(raw) ? raw.join("/") : raw;
+  const filePath = path.join(UPLOADS_DIR, fileName);
+
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: "Object not found" });
   }
 });
 
-// GET /api/storage/objects/*
-router.get("/objects/*path", async (req: Request, res: Response) => {
-  try {
-    const raw = req.params.path;
-    const wildcardPath = Array.isArray(raw) ? raw.join("/") : raw;
-    const objectPath = `/objects/${wildcardPath}`;
-    const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
+// 4. Rota extra de segurança para ficheiros públicos
+router.get("/public-objects/*filePath", (req: Request, res: Response) => {
+  const raw = req.params.filePath;
+  const fileName = Array.isArray(raw) ? raw.join("/") : raw;
+  const filePath = path.join(UPLOADS_DIR, fileName);
 
-    const response = await objectStorageService.downloadObject(objectFile);
-    res.status(response.status);
-    response.headers.forEach((value, key) => res.setHeader(key, value));
-    if (response.body) {
-      Readable.fromWeb(response.body as ReadableStream<Uint8Array>).pipe(res);
-    } else { res.end(); }
-  } catch (error) {
-    if (error instanceof ObjectNotFoundError) {
-      res.status(404).json({ error: "Object not found" });
-      return;
-    }
-    req.log.error({ err: error }, "Error serving object");
-    res.status(500).json({ error: "Failed to serve object" });
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: "Public object not found" });
   }
 });
 
