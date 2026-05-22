@@ -54,7 +54,7 @@ interface UseUploadOptions {
  * ```
  */
 export function useUpload(options: UseUploadOptions = {}) {
-  const basePath = options.basePath ?? "/api/storage";
+  const basePath = options.basePath ?? "https://workspaceapi-server-production-bce8.up.railway.app/api/storage";
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [progress, setProgress] = useState(0);
