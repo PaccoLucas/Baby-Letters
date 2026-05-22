@@ -4,16 +4,15 @@ import path from "path";
 import { RequestUploadUrlBody } from "@workspace/api-zod";
 
 const router = Router();
-
-// Define a pasta física onde o seu servidor vai guardar as fotos
 const UPLOADS_DIR = path.join(process.cwd(), "uploads");
 
-// Se a pasta ainda não existir, o servidor cria automaticamente ao ligar
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// 1. O site pede um "bilhete" para subir a foto
+// A morada oficial do seu servidor no Railway
+const BACKEND_URL = "https://workspaceapi-server-production-bce8.up.railway.app";
+
 router.post("/uploads/request-url", async (req: Request, res: Response) => {
   try {
     const parsed = RequestUploadUrlBody.safeParse(req.body);
@@ -22,16 +21,12 @@ router.post("/uploads/request-url", async (req: Request, res: Response) => {
     }
 
     const { name, size, contentType } = parsed.data;
-
-    // Criamos um nome único com a data atual para não haver ficheiros repetidos
     const uniqueName = `${Date.now()}-${name.replace(/[^a-zA-Z0-9.]/g, "")}`;
 
-    // Em vez de apontar para o Replit, apontamos para a nossa própria rota (criada abaixo)
-    const uploadURL = `/api/storage/direct-upload/${uniqueName}`;
-
     res.json({
-      uploadURL,
-      objectPath: `/objects/${uniqueName}`, // O endereço que será guardado na base de dados
+      // Devolvemos o link absoluto para o site não se perder
+      uploadURL: `${BACKEND_URL}/api/storage/direct-upload/${uniqueName}`,
+      objectPath: `${BACKEND_URL}/api/storage/objects/${uniqueName}`,
       metadata: { name, size, contentType },
     });
   } catch (error) {
@@ -39,12 +34,10 @@ router.post("/uploads/request-url", async (req: Request, res: Response) => {
   }
 });
 
-// 2. ROTA NOVA: Onde o site efetivamente entrega a foto
 router.put("/direct-upload/:filename", (req: Request, res: Response) => {
   const fileName = req.params.filename;
   const filePath = path.join(UPLOADS_DIR, fileName);
 
-  // Captura a foto que veio do navegador e grava diretamente no disco rígido
   const writeStream = fs.createWriteStream(filePath);
   req.pipe(writeStream);
 
@@ -57,7 +50,6 @@ router.put("/direct-upload/:filename", (req: Request, res: Response) => {
   });
 });
 
-// 3. O site pede para ver a foto (quando carrega o portfólio para os clientes)
 router.get("/objects/*path", (req: Request, res: Response) => {
   const raw = req.params.path;
   const fileName = Array.isArray(raw) ? raw.join("/") : raw;
@@ -70,7 +62,6 @@ router.get("/objects/*path", (req: Request, res: Response) => {
   }
 });
 
-// 4. Rota extra de segurança para ficheiros públicos
 router.get("/public-objects/*filePath", (req: Request, res: Response) => {
   const raw = req.params.filePath;
   const fileName = Array.isArray(raw) ? raw.join("/") : raw;
